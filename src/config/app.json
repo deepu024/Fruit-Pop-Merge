@@ -1,0 +1,11 @@
+{
+  "name": "Fruit Pop Merge",
+  "slug": "fruit-pop-merge",
+  "androidPackage": "com.fruitpopmerge.game",
+  "iosBundleId": "com.fruitpopmerge.game",
+  "version": "1.0.0",
+  "androidVersionCode": 1,
+  "admobAndroidAppId": "ca-app-pub-3940256099942544~3347511713",
+  "admobIosAppId": "ca-app-pub-3940256099942544~1458002511",
+  "privacyPolicyUrl": "https://example.com/privacy"
+}
