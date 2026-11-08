@@ -42,7 +42,8 @@
     "typecheck": "tsc --noEmit",
     "lint": "expo lint",
     "sounds": "node scripts/generate-sounds.js",
-    "preview": "jest -c scripts/preview/jest.config.js"
+    "preview": "jest -c scripts/preview/jest.config.js scripts/preview/render.test.ts",
+    "assets": "jest -c scripts/preview/jest.config.js scripts/preview/assets.test.ts"
   },
   "private": true,
   "jest": {
