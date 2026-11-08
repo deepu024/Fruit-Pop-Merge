@@ -5,7 +5,7 @@
  * TODO(release): create Banner, Interstitial and Rewarded units in AdMob and paste
  * their IDs below, then set USE_TEST_ADS to false (or keep it tied to __DEV__).
  */
-export const USE_TEST_ADS = true; // TODO(release): change to `__DEV__` once real IDs are in PRODUCTION
+export const USE_TEST_ADS = true; // TODO(release): set to `__DEV__` once the AdMob APP id (with ~) is in src/config/app.json
 
 const TEST = {
   banner: 'ca-app-pub-3940256099942544/9214589741', // adaptive banner
@@ -14,9 +14,9 @@ const TEST = {
 };
 
 const PRODUCTION = {
-  banner: 'ca-app-pub-XXXXXXXXXXXXXXXX/NNNNNNNNNN', // TODO(release)
-  interstitial: 'ca-app-pub-XXXXXXXXXXXXXXXX/NNNNNNNNNN', // TODO(release)
-  rewarded: 'ca-app-pub-XXXXXXXXXXXXXXXX/NNNNNNNNNN', // TODO(release)
+  banner: 'ca-app-pub-4301072725271018/8527613194', // menu_banner
+  interstitial: 'ca-app-pub-4301072725271018/9106022681', // gameover_interstitial
+  rewarded: 'ca-app-pub-4301072725271018/8148339245', // rewarded_continue_powerup
 };
 
 export const AD_UNITS = USE_TEST_ADS ? TEST : PRODUCTION;
