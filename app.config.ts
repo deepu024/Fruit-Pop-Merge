@@ -64,6 +64,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       },
     ],
     './plugins/withGradleThrottle', // keeps local builds from freezing the Mac
+    './plugins/withReleaseSigning', // local upload-key signing; secrets stay in ~/.gradle/gradle.properties
   ],
   extra: {
     eas: {
