@@ -1,6 +1,6 @@
 import mobileAds, { AdEventType, AdsConsent, InterstitialAd, MaxAdContentRating, RewardedAd, RewardedAdEventType } from 'react-native-google-mobile-ads';
 
-import { AD_UNITS, INTERSTITIAL_EVERY, INTERSTITIAL_MIN_GAMES, TEST_DEVICE_IDS } from '../config/ads';
+import { AD_UNITS, INTERSTITIAL_EVERY, INTERSTITIAL_MIN_GAMES, TEST_DEVICE_IDS, USE_TEST_ADS } from '../config/ads';
 import { shouldShowInterstitial } from '../game/scoring';
 import { storage } from '../storage/storage';
 
@@ -50,9 +50,20 @@ export const ads = {
    * then initializes the SDK only if ads may be requested.
    */
   async init(): Promise<void> {
+    let canRequestAds = false;
     try {
-      const consent = await AdsConsent.gatherConsent();
-      if (!consent.canRequestAds) return;
+      canRequestAds = (await AdsConsent.gatherConsent()).canRequestAds;
+    } catch (e) {
+      // Offline, or no consent message published in AdMob yet. Per Google's guidance, consent
+      // obtained in an earlier session (or not being required) still allows ads.
+      console.warn('[ads] consent failed', e);
+      try {
+        canRequestAds = (await AdsConsent.getConsentInfo()).canRequestAds;
+      } catch {}
+    }
+    // Google's sample ads need no consent, so test-ad builds always show them.
+    if (!canRequestAds && !USE_TEST_ADS) return;
+    try {
       await mobileAds().setRequestConfiguration({
         tagForChildDirectedTreatment: false,
         tagForUnderAgeOfConsent: false,
