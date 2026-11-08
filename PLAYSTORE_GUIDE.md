@@ -144,7 +144,7 @@ Fruit Pop Merge is a cute fruit merge puzzle: drop fruits into the jar, match tw
 
 Perfect for quick breaks: one-finger controls, no timers, no pressure. How big can your fruit get?
 
-Questions or ideas? Email us at <your email> — we read everything.
+Questions or ideas? Email us at ojashsharma024@gmail.com — we read everything.
 ```
 
 ### D5. Graphics (already made — `docs/store/`)
