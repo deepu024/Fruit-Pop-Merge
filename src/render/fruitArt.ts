@@ -11,12 +11,16 @@ const BOUNDS = Skia.XYWHRect(-150, -170, 300, 320);
 
 const cache = new Map<string, SkPicture>();
 
-export function fruitPicture(level: number, blink = false): SkPicture {
-  const key = `${level}:${blink ? 1 : 0}`;
+/** Expression variants; each is its own cached picture. */
+export type Face = 'open' | 'blink' | 'happy' | 'scared';
+const FACES: Face[] = ['open', 'blink', 'happy', 'scared'];
+
+export function fruitPicture(level: number, face: Face = 'open'): SkPicture {
+  const key = `${level}:${face}`;
   let pic = cache.get(key);
   if (!pic) {
     const rec = Skia.PictureRecorder();
-    drawFruit(rec.beginRecording(BOUNDS), level, blink);
+    drawFruit(rec.beginRecording(BOUNDS), level, face);
     pic = rec.finishRecordingAsPicture();
     cache.set(key, pic);
   }
@@ -25,10 +29,7 @@ export function fruitPicture(level: number, blink = false): SkPicture {
 
 /** Warm the cache up front so the first merge never hitches. */
 export function preloadFruitArt() {
-  for (let i = 0; i < FRUITS.length; i++) {
-    fruitPicture(i, false);
-    fruitPicture(i, true);
-  }
+  for (let i = 0; i < FRUITS.length; i++) for (const f of FACES) fruitPicture(i, f);
 }
 
 // ---------------------------------------------------------------- helpers
@@ -97,28 +98,65 @@ function rimAndShine(cv: SkCanvas, d: FruitDef) {
   ellipse(cv, -ART_R * 0.66, -ART_R * 0.16, ART_R * 0.07, ART_R * 0.07, fill('#FFFFFF', 0.5));
 }
 
-function face(cv: SkCanvas, blink: boolean) {
+const INK = '#2B1630';
+
+function face(cv: SkCanvas, kind: Face) {
   const ex = ART_R * 0.3;
   const ey = ART_R * 0.08;
-  if (blink) {
+  const mouthY = ART_R * 0.28;
+  for (const s of [-1, 1]) ellipse(cv, s * ART_R * 0.5, ART_R * 0.3, 13, 8, fill('#FF6F91', kind === 'happy' ? 0.7 : 0.45));
+
+  if (kind === 'happy') {
+    // ^ ^ eyes + big open smile
+    for (const s of [-1, 1]) {
+      const path = Skia.PathBuilder.Make();
+      path.moveTo(s * ex - 12, ey + 5);
+      path.quadTo(s * ex, ey - 12, s * ex + 12, ey + 5);
+      cv.drawPath(path.build(), stroke(INK, 6));
+    }
+    const m = Skia.PathBuilder.Make();
+    m.moveTo(-16, mouthY - 3);
+    m.quadTo(0, mouthY + 26, 16, mouthY - 3);
+    m.close();
+    cv.drawPath(m.build(), fill(INK));
+    ellipse(cv, 0, mouthY + 9, 7, 4, fill('#FF6F91'));
+    return;
+  }
+
+  if (kind === 'scared') {
+    // wide white eyes with tiny pupils, little 'o' mouth, sweat drop
+    for (const s of [-1, 1]) {
+      ellipse(cv, s * ex, ey, 13, 16, fill('#FFFFFF'));
+      cv.drawOval(Skia.XYWHRect(s * ex - 13, ey - 16, 26, 32), stroke(INK, 3.5));
+      cv.drawCircle(s * ex, ey + 2, 4.5, fill(INK));
+    }
+    ellipse(cv, 0, mouthY + 4, 6, 8, fill(INK));
+    const drop = Skia.PathBuilder.Make();
+    drop.moveTo(ART_R * 0.62, -ART_R * 0.3);
+    drop.quadTo(ART_R * 0.74, -ART_R * 0.08, ART_R * 0.62, -ART_R * 0.04);
+    drop.quadTo(ART_R * 0.5, -ART_R * 0.08, ART_R * 0.62, -ART_R * 0.3);
+    cv.drawPath(drop.build(), fill('#7FD3FF', 0.9));
+    return;
+  }
+
+  if (kind === 'blink') {
     for (const s of [-1, 1]) {
       const path = Skia.PathBuilder.Make();
       path.moveTo(s * ex - 11, ey);
       path.quadTo(s * ex, ey + 10, s * ex + 11, ey);
-      cv.drawPath(path.build(), stroke('#2B1630', 6));
+      cv.drawPath(path.build(), stroke(INK, 6));
     }
   } else {
     for (const s of [-1, 1]) {
-      ellipse(cv, s * ex, ey, 10, 13, fill('#2B1630'));
+      ellipse(cv, s * ex, ey, 10, 13, fill(INK));
       cv.drawCircle(s * ex - 3, ey - 5, 4.2, fill('#FFFFFF'));
       cv.drawCircle(s * ex + 3.5, ey + 4, 1.8, fill('#FFFFFF', 0.8));
     }
   }
-  for (const s of [-1, 1]) ellipse(cv, s * ART_R * 0.5, ART_R * 0.3, 13, 8, fill('#FF6F91', 0.45));
   const mouth = Skia.PathBuilder.Make();
-  mouth.moveTo(-9, ART_R * 0.28);
-  mouth.quadTo(0, ART_R * 0.28 + 10, 9, ART_R * 0.28);
-  cv.drawPath(mouth.build(), stroke('#2B1630', 4.5));
+  mouth.moveTo(-9, mouthY);
+  mouth.quadTo(0, mouthY + 10, 9, mouthY);
+  cv.drawPath(mouth.build(), stroke(INK, 4.5));
 }
 
 function details(cv: SkCanvas, d: FruitDef) {
@@ -253,7 +291,7 @@ function crown(cv: SkCanvas, d: FruitDef) {
   }
 }
 
-function drawFruit(cv: SkCanvas, level: number, blink: boolean) {
+function drawFruit(cv: SkCanvas, level: number, kind: Face) {
   const d = FRUITS[level];
   const back = d.name === 'Cherry' || d.name === 'Grape' || d.name === 'Apple' || d.name === 'Pear' || d.name === 'Melon' || d.name === 'Watermelon';
   if (back) crown(cv, d); // stems sit behind the body
@@ -261,5 +299,5 @@ function drawFruit(cv: SkCanvas, level: number, blink: boolean) {
   details(cv, d);
   rimAndShine(cv, d);
   if (!back) crown(cv, d);
-  face(cv, blink);
+  face(cv, kind);
 }

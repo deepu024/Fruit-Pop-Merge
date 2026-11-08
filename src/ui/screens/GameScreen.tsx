@@ -14,7 +14,9 @@ import { computeLayout } from '../../render/drawFrame';
 import { GameCanvas } from '../../render/GameCanvas';
 import { storage } from '../../storage/storage';
 import { Button } from '../components/Button';
+import { DiscoveryCard } from '../components/DiscoveryCard';
 import { FruitIcon } from '../components/FruitIcon';
+import { Tutorial } from '../components/Tutorial';
 import type { GameMode, Navigate } from '../nav';
 import { useCountUp } from '../useCountUp';
 
@@ -37,6 +39,7 @@ export function GameScreen({ mode, navigate }: { mode: GameMode; navigate: Navig
   const [adsUsed, setAdsUsed] = useState(0);
   const [rewardReady, setRewardReady] = useState(ads.rewardedReady());
   const [toast, setToast] = useState<string | null>(null);
+  const [discovery, setDiscovery] = useState<number | null>(null);
   const runEnded = useRef(false);
   const today = useMemo(() => dateKey(), []);
 
@@ -70,7 +73,12 @@ export function GameScreen({ mode, navigate }: { mode: GameMode; navigate: Navig
         case 'discover':
           if (!discovered[e.level] && storage.discover(e.level)) {
             discovered[e.level] = true;
-            if (e.level >= 5) setToast(`New fruit discovered!`);
+            // spawnable fruits are found by dropping; celebrate the ones earned by merging
+            if (e.level >= 5) {
+              setDiscovery(e.level);
+              engine.slowMo(700);
+              sound.play('powerup');
+            }
           }
           break;
         case 'powerups':
@@ -98,6 +106,12 @@ export function GameScreen({ mode, navigate }: { mode: GameMode; navigate: Navig
   }, [engine, mode, today]);
 
   useEffect(() => ads.onRewardedReady(setRewardReady), []);
+
+  useEffect(() => {
+    if (discovery === null) return;
+    const id = setTimeout(() => setDiscovery(null), 2200);
+    return () => clearTimeout(id);
+  }, [discovery]);
 
   useEffect(() => {
     if (!toast) return;
@@ -198,6 +212,8 @@ export function GameScreen({ mode, navigate }: { mode: GameMode; navigate: Navig
           <Text style={styles.bannerText}>Tap a fruit to pop it</Text>
         </Animated.View>
       )}
+      <Tutorial key={`tut-${run}`} engine={engine} top={insets.top + HUD_H + 8} />
+      {discovery !== null && <DiscoveryCard level={discovery} top={insets.top + HUD_H + 70} />}
       {toast && (
         <Animated.View entering={FadeIn.springify()} exiting={FadeOut} style={[styles.banner, styles.toast, { top: insets.top + HUD_H + 8 }]} pointerEvents="none">
           <Text style={styles.bannerText}>{toast}</Text>

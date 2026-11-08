@@ -107,4 +107,45 @@ describe('GameEngine', () => {
     e.aim(5000);
     expect(e.held.x + e.heldRadius()).toBeLessThanOrEqual(WORLD.jarRight);
   });
+
+  it('slow motion slows the simulation without changing outcomes', () => {
+    const fast = new GameEngine({ seed: 1 });
+    const slow = new GameEngine({ seed: 1 });
+    const a = fast.debugSpawn(2, 220, 300);
+    const b = slow.debugSpawn(2, 220, 300);
+    slow.slowMo(10_000);
+    run(fast, 300);
+    run(slow, 300);
+    expect(b.body.position.y - 300).toBeLessThan((a.body.position.y - 300) * 0.5);
+    expect(slow.now).toBeLessThan(fast.now);
+  });
+
+  it('flags same-level fruits that are almost touching, not different ones', () => {
+    const e = new GameEngine({ seed: 1 });
+    const a = e.debugSpawn(4, 150, 709);
+    const b = e.debugSpawn(4, 150 + 2 * 41 + 8, 709); // 8 units apart
+    const c = e.debugSpawn(2, 380, 722);
+    run(e, 200);
+    expect(a.near).toBeGreaterThan(0.3);
+    expect(b.near).toBeGreaterThan(0.3);
+    expect(c.near).toBe(0);
+  });
+
+  it('newly merged fruit is happy and a 3-chain triggers slow-mo + flash', () => {
+    const e = new GameEngine({ seed: 1 });
+    let combo = 0;
+    e.on((ev) => {
+      if (ev.type === 'combo') combo = Math.max(combo, ev.count);
+    });
+    e.debugSpawn(0, 100, 720);
+    e.debugSpawn(0, 100, 680);
+    e.debugSpawn(0, 220, 720);
+    e.debugSpawn(0, 220, 680);
+    e.debugSpawn(0, 340, 720);
+    e.debugSpawn(0, 340, 680);
+    for (let t = 0; t < 2000 && combo < 3; t += STEP_MS) e.tick(STEP_MS);
+    expect(combo).toBeGreaterThanOrEqual(3);
+    expect(e.fruits.some((f) => f.happyT > 0)).toBe(true);
+    expect(e.slowMoMs + e.flash).toBeGreaterThan(0);
+  });
 });

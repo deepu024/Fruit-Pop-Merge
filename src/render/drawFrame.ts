@@ -5,7 +5,7 @@ import { theme } from '../config/theme';
 import { clamp01, easeOutBack, easeOutCubic, easeOutElastic } from '../game/easing';
 import { POP_MS, WORLD, type GameEngine } from '../game/engine';
 import { FRUITS } from '../game/fruits';
-import { ART_R, fruitPicture } from './fruitArt';
+import { ART_R, fruitPicture, type Face } from './fruitArt';
 
 export type Layout = { width: number; height: number; scale: number; ox: number; oy: number };
 
@@ -147,7 +147,7 @@ function drawJarFront(cv: SkCanvas) {
 }
 
 // ---------------------------------------------------------------- fruit
-function drawFruitAt(cv: SkCanvas, level: number, x: number, y: number, angle: number, scale: number, blink: boolean, sq = 0, sqAngle = 0, alpha = 1) {
+function drawFruitAt(cv: SkCanvas, level: number, x: number, y: number, angle: number, scale: number, face: Face, sq = 0, sqAngle = 0, alpha = 1) {
   const s = (FRUITS[level].radius / ART_R) * scale;
   cv.save();
   cv.translate(x, y);
@@ -164,18 +164,18 @@ function drawFruitAt(cv: SkCanvas, level: number, x: number, y: number, angle: n
     const p = P!.pic;
     p.setAlphaf(alpha);
     cv.saveLayer(p);
-    cv.drawPicture(fruitPicture(level, blink));
+    cv.drawPicture(fruitPicture(level, face));
     cv.restore();
   } else {
-    cv.drawPicture(fruitPicture(level, blink));
+    cv.drawPicture(fruitPicture(level, face));
   }
   cv.restore();
 }
 
-function drawText(cv: SkCanvas, text: string, x: number, y: number, font: SkFont, size: number, color: string, alpha: number) {
+function drawText(cv: SkCanvas, text: string, x: number, y: number, font: SkFont, size: number, color: string, alpha: number, maxW = Infinity) {
   const p = P!;
-  const k = size / font.getSize();
   const w = font.measureText(text).width;
+  const k = Math.min(size / font.getSize(), maxW / w); // shrink to fit when needed
   cv.save();
   cv.translate(x, y);
   cv.scale(k, k);
@@ -220,16 +220,28 @@ export function drawFrame(cv: SkCanvas, e: GameEngine, l: Layout, timeMs: number
     const alpha = e.bombArmed ? 0.35 : 1;
     setFill(p.dots, theme.guideLine, 0.8 * appear * alpha);
     cv.drawLine(h.x, hy + FRUITS[h.level].radius + 10, h.x, WORLD.jarBottom - 6, p.dots);
-    const blink = Math.sin(t * 0.7) > 0.985;
-    drawFruitAt(cv, h.level, h.x, hy, Math.sin(t * 1.6) * 0.08, easeOutBack(appear), blink, 0, 0, alpha);
+    const face: Face = Math.sin(t * 0.7) > 0.985 ? 'blink' : 'open';
+    drawFruitAt(cv, h.level, h.x, hy, Math.sin(t * 1.6) * 0.08, easeOutBack(appear), face, 0, 0, alpha);
+  }
+
+  // "almost!" glow under same-level fruits that are nearly touching
+  for (const f of e.fruits) {
+    if (f.near < 0.08) continue;
+    const pos = f.body.position;
+    setFill(p.fill, FRUITS[f.level].light, 0.45 * f.near * (0.75 + 0.25 * Math.sin(timeMs * 0.015)));
+    cv.drawCircle(pos.x, pos.y, f.r * (1.12 + 0.06 * f.near), p.fill);
   }
 
   // fruits
+  const scaredY = WORLD.dangerY + 70;
   for (const f of e.fruits) {
     const pos = f.body.position;
     const pop = f.popT < POP_MS ? 0.25 + 0.75 * easeOutBack(f.popT / POP_MS, 3) : 1;
     const sq = f.squash ? f.squash * Math.exp(-f.squashT / 140) * Math.cos(f.squashT / 32) : 0;
-    drawFruitAt(cv, f.level, pos.x, pos.y, f.body.angle, pop, f.blinkT > 0, Math.abs(sq) > 0.004 ? sq : 0, f.squashAngle);
+    const wiggle = f.near > 0.08 ? Math.sin(timeMs * 0.03 + f.id) * 0.1 * f.near : 0;
+    const face: Face =
+      e.dangerLevel > 0 && pos.y - f.r < scaredY ? 'scared' : f.happyT > 0 ? 'happy' : f.blinkT > 0 ? 'blink' : 'open';
+    drawFruitAt(cv, f.level, pos.x, pos.y, f.body.angle + wiggle, pop * (1 + 0.04 * f.near), face, Math.abs(sq) > 0.004 ? sq : 0, f.squashAngle);
   }
 
   const fx = e.fx;
@@ -237,7 +249,7 @@ export function drawFrame(cv: SkCanvas, e: GameEngine, l: Layout, timeMs: number
   for (const g of fx.ghosts) {
     if (!g.active) continue;
     const k = easeOutCubic(g.t / g.dur);
-    drawFruitAt(cv, g.level, g.x0 + (g.x1 - g.x0) * k, g.y0 + (g.y1 - g.y0) * k, g.angle, 1 - 0.6 * k, false, 0, 0, 1 - k * 0.7);
+    drawFruitAt(cv, g.level, g.x0 + (g.x1 - g.x0) * k, g.y0 + (g.y1 - g.y0) * k, g.angle, 1 - 0.6 * k, 'happy', 0, 0, 1 - k * 0.7);
   }
 
   // shockwave rings
@@ -275,9 +287,16 @@ export function drawFrame(cv: SkCanvas, e: GameEngine, l: Layout, timeMs: number
     cv.save();
     cv.translate(WORLD.width / 2, WORLD.jarTop + 70);
     cv.rotate(-6 + Math.sin(k * 12) * 2, 0, 0);
-    drawText(cv, fx.combo.text, 0, 0, p.bigFont, 44 * scale, theme.gold, alpha);
+    const size = 44 + Math.min(fx.combo.count - 2, 4) * 5; // bigger chains, bigger text
+    drawText(cv, fx.combo.text, 0, 0, p.bigFont, size * scale, theme.gold, alpha, (WORLD.jarRight - WORLD.jarLeft) * 0.92 * Math.max(scale, 0.01));
     cv.restore();
   }
 
   cv.restore();
+
+  // combo / big-merge flash over the whole screen
+  if (e.flash > 0) {
+    setFill(p.fill, '#FFFFFF', e.flash * 0.35);
+    cv.drawRect(Skia.XYWHRect(0, 0, l.width, l.height), p.fill);
+  }
 }

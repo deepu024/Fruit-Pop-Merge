@@ -10,7 +10,7 @@ const ROOT = path.join(__dirname, '..', '..');
 const shim = require('./skia-shim.js');
 
 let Skia: any;
-let fruitPicture: (level: number, blink?: boolean) => any;
+let fruitPicture: (level: number) => any;
 let ART_R: number;
 
 function save(surface: any, rel: string) {

@@ -41,7 +41,7 @@ export class Effects {
   rings: Ring[];
   popups: Popup[];
   ghosts: Ghost[];
-  combo = { text: '', t: 0, dur: 1100, active: false };
+  combo = { text: '', count: 0, t: 0, dur: 1100, active: false };
 
   constructor(maxParticles: number) {
     this.particles = pool(maxParticles, () => ({ active: false, x: 0, y: 0, vx: 0, vy: 0, life: 0, maxLife: 1, size: 1, color: '#fff' }));
@@ -112,6 +112,7 @@ export class Effects {
 
   showCombo(count: number) {
     this.combo.text = `Combo x${count}!`;
+    this.combo.count = count;
     this.combo.t = 0;
     this.combo.active = true;
   }

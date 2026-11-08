@@ -60,6 +60,11 @@ export type Fruit = {
   blinkIn: number;
   blinkT: number;
   dangerMs: number;
+  /** 0..1: a same-level partner is almost touching (drives glow + wiggle) */
+  near: number;
+  nearTarget: number;
+  /** ms left of the happy face after being created by a merge */
+  happyT: number;
 };
 
 export const POP_MS = 320;
@@ -97,6 +102,11 @@ export class GameEngine {
   shake = 0; // camera shake amplitude, world units
   powerUps: { shake: number; bomb: number };
   bombArmed = false;
+  /** real ms of slow motion left (combos, discoveries) */
+  slowMoMs = 0;
+  /** 0..1 white screen flash */
+  flash = 0;
+  private nearTick = 0;
 
   held: { level: number; x: number; readyAt: number };
 
@@ -163,6 +173,9 @@ export class GameEngine {
       blinkIn: 1500 + this.rand() * 3500,
       blinkT: 0,
       dangerMs: 0,
+      near: 0,
+      nearTarget: 0,
+      happyT: pop ? 1300 : 0,
     };
     this.fruits.push(f);
     this.byBody.set(body.id, f);
@@ -369,6 +382,12 @@ export class GameEngine {
         this.fx.showCombo(count);
         this.emit({ type: 'combo', count });
       }
+      if (count >= 3) {
+        // a beat of slow motion + flash makes chains feel huge
+        this.slowMo(120 + 30 * Math.min(count, 6));
+        this.flash = Math.max(this.flash, Math.min(0.9, 0.2 + 0.1 * count));
+      }
+      if (big || level >= 8) this.flash = Math.max(this.flash, 0.7);
       if (count === COMBO_POWERUP_AT && this.earnedPowerUps < MAX_POWERUPS_EARNED) {
         this.earnedPowerUps++;
         this.grantPowerUp(this.rand() < 0.5 ? 'shake' : 'bomb');
@@ -398,8 +417,38 @@ export class GameEngine {
     this.checkDanger(dt);
   }
 
+  /** Slow the simulation for `ms` of real time (cosmetic; never changes outcomes). */
+  slowMo(ms: number) {
+    this.slowMoMs = Math.max(this.slowMoMs, ms);
+  }
+
+  /** Marks same-level pairs that are almost touching. O(n²/2) but only every 3rd step. */
+  private updateNear() {
+    const fr = this.fruits;
+    for (const f of fr) f.nearTarget = 0;
+    for (let i = 0; i < fr.length; i++) {
+      const a = fr[i];
+      for (let j = i + 1; j < fr.length; j++) {
+        const b = fr[j];
+        if (a.level !== b.level) continue;
+        const dx = a.body.position.x - b.body.position.x;
+        const dy = a.body.position.y - b.body.position.y;
+        const gap = Math.sqrt(dx * dx + dy * dy) - 2 * a.r;
+        const range = Math.max(14, a.r * 0.7);
+        if (gap < range) {
+          const t = 1 - Math.max(0, gap) / range;
+          a.nearTarget = Math.max(a.nearTarget, t);
+          b.nearTarget = Math.max(b.nearTarget, t);
+        }
+      }
+    }
+    for (const f of fr) f.near += (f.nearTarget - f.near) * 0.35;
+  }
+
   private updateFruitAnims(dt: number) {
+    if (++this.nearTick % 3 === 0) this.updateNear();
     for (const f of this.fruits) {
+      if (f.happyT > 0) f.happyT -= dt;
       if (f.popT < POP_MS) f.popT += dt;
       f.squashT += dt;
       if (f.blinkT > 0) f.blinkT -= dt;
@@ -446,11 +495,15 @@ export class GameEngine {
     if (!this.paused) this.fx.update(dt);
     this.shake *= Math.pow(0.86, dt / STEP_MS);
     if (this.shake < 0.05) this.shake = 0;
+    this.flash *= Math.pow(0.82, dt / STEP_MS);
+    if (this.flash < 0.01) this.flash = 0;
     if (this.paused || this.gameOver) {
       this.acc = 0;
       return;
     }
-    this.acc += dt;
+    const slow = this.slowMoMs > 0;
+    this.slowMoMs = Math.max(0, this.slowMoMs - dt);
+    this.acc += slow ? dt * 0.35 : dt;
     let steps = 0;
     while (this.acc >= STEP_MS && steps < MAX_STEPS_PER_TICK) {
       this.step(STEP_MS);

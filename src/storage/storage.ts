@@ -14,6 +14,7 @@ const K = {
   sfx: 'settings.sfx',
   haptics: 'settings.haptics',
   adsRemoved: 'iap.adsRemoved',
+  tutorialDone: 'tutorialDone',
   daily: (date: string) => `daily.best.${date}`,
 };
 
@@ -67,6 +68,9 @@ export const storage = {
   setSetting(key: keyof Settings, value: boolean) {
     kv.set(K[key], value);
   },
+
+  getTutorialDone: () => bool(K.tutorialDone, false),
+  setTutorialDone: () => kv.set(K.tutorialDone, true),
 
   getAdsRemoved: () => bool(K.adsRemoved, false),
   setAdsRemoved: (v: boolean) => kv.set(K.adsRemoved, v),

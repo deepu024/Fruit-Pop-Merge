@@ -20,18 +20,19 @@ test('fruit sheet', () => {
   const { fruitPicture, ART_R } = require('../../src/render/fruitArt');
   const { FRUITS } = require('../../src/game/fruits');
   const cell = 160;
-  const surface = shim.__surface(cell * 6, cell * 4);
+  const surface = shim.__surface(cell * 6, cell * 6);
   const cv = surface.getCanvas();
   cv.clear(shim.Skia.Color('#FFE3EE'));
   FRUITS.forEach((_: unknown, i: number) => {
-    for (const blink of [false, true]) {
-      const idx = blink ? i + 12 : i;
-      if (blink && i > 5) return;
+    for (const face of ['open', 'blink', 'happy', 'scared'] as const) {
+      const row = ['open', 'blink', 'happy', 'scared'].indexOf(face);
+      if (row > 0 && i > 5) return;
+      const idx = row === 0 ? i : 6 + row * 6 + i;
       cv.save();
       cv.translate((idx % 6) * cell + cell / 2, Math.floor(idx / 6) * cell + cell / 2 + 8);
       const s = (cell * 0.36) / ART_R;
       cv.scale(s, s);
-      cv.drawPicture(fruitPicture(i, blink));
+      cv.drawPicture(fruitPicture(i, face));
       cv.restore();
     }
   });
