@@ -47,6 +47,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
         androidAppId: app.admobAndroidAppId,
         iosAppId: app.admobIosAppId,
         delayAppMeasurementInit: true, // no measurement before UMP consent
+        // iOS App Tracking Transparency prompt text (shown by the UMP flow when enabled in AdMob)
+        userTrackingUsageDescription: 'This lets us show you ads that are more relevant to you. Your choice does not affect the game.',
       },
     ],
     [
