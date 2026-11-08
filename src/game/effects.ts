@@ -85,6 +85,12 @@ export class Effects {
   }
 
   popup(x: number, y: number, text: string, color: string, size: number) {
+    // stack above recent popups instead of drawing on top of them (simultaneous merges)
+    for (let tries = 0; tries < 6; tries++) {
+      const hit = this.popups.some((q) => q.active && q.t < 500 && Math.abs(q.x - x) < 60 && Math.abs(q.y - y) < size + 4);
+      if (!hit) break;
+      y -= size + 6;
+    }
     const p = this.free(this.popups) ?? this.popups[0];
     p.active = true;
     p.x = x;

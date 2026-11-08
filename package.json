@@ -43,7 +43,8 @@
     "lint": "expo lint",
     "sounds": "node scripts/generate-sounds.js",
     "preview": "jest -c scripts/preview/jest.config.js scripts/preview/render.test.ts",
-    "assets": "jest -c scripts/preview/jest.config.js scripts/preview/assets.test.ts"
+    "assets": "jest -c scripts/preview/jest.config.js scripts/preview/assets.test.ts",
+    "store": "jest -c scripts/preview/jest.config.js scripts/preview/store.test.ts"
   },
   "private": true,
   "jest": {

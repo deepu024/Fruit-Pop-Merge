@@ -156,6 +156,17 @@ Answers for this app as built — re-check if you add analytics, crash reporting
 
 ## 6. Store listing
 
+### Ready-made graphics (`npm run store` regenerates them)
+
+| Play Console field (Grow > Store presence > Main store listing) | File |
+|---|---|
+| App icon (512×512 PNG) | `docs/store/icon-512.png` |
+| Feature graphic (1024×500) | `docs/store/feature-graphic.png` |
+| Phone screenshots (1080×1920, upload in this order) | `docs/store/screenshot-01-gameplay.png` … `screenshot-05-daily.png` |
+
+All art is generated from the game's own procedural fruit drawings and real engine simulations,
+so it is 100% original. Optional: tablet screenshots are not required for a phone-only game.
+
 - **Title (≤30):** Fruit Pop Merge
 - **Short description (≤80):** Drop, merge and pop cute fruits in a squishy physics puzzle!
 - **Full description:**
