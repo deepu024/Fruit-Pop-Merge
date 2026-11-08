@@ -5,7 +5,9 @@
  * TODO(release): create Banner, Interstitial and Rewarded units in AdMob and paste
  * their IDs below, then set USE_TEST_ADS to false (or keep it tied to __DEV__).
  */
-export const USE_TEST_ADS = true; // TODO(release): set to `__DEV__` once the AdMob APP id (with ~) is in src/config/app.json
+// dev builds + release builds made with EXPO_PUBLIC_TEST_ADS=1 (sideload/QA APKs): Google test ads.
+// Store builds: your real units below.
+export const USE_TEST_ADS = __DEV__ || process.env.EXPO_PUBLIC_TEST_ADS === '1';
 
 const TEST = {
   banner: 'ca-app-pub-3940256099942544/9214589741', // adaptive banner
