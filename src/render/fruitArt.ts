@@ -153,6 +153,15 @@ function details(cv: SkCanvas, d: FruitDef) {
         cv.drawCircle(Math.cos(ang) * rr, Math.sin(ang) * rr, 2.4, fill('#8A6A2A', 0.25));
       }
       break;
+    case 'Apple': {
+      // top dimple + a few sunny streaks
+      const dent = Skia.PathBuilder.Make();
+      dent.moveTo(-26, -R * 0.84);
+      dent.quadTo(0, -R * 0.7, 26, -R * 0.84);
+      cv.drawPath(dent.build(), stroke(d.dark, 6, 0.55));
+      for (let i = -2; i <= 2; i++) cv.drawLine(i * 22 + 10, 30, i * 26 + 14, 80, stroke('#FFE08A', 4, 0.25));
+      break;
+    }
     case 'Peach': {
       const path = Skia.PathBuilder.Make();
       path.moveTo(-4, -R);
@@ -194,8 +203,10 @@ function crown(cv: SkCanvas, d: FruitDef) {
   const R = ART_R;
   switch (d.name) {
     case 'Cherry':
-      stem(cv, 0, -R * 0.85, 26, -R * 1.45, -24);
-      leaf(cv, 50, -R * 1.3, 24, -25, d.accent);
+      // long twin-style stem: a second, smaller stem curling off to the side
+      stem(cv, 0, -R * 0.85, 26, -R * 1.5, -24);
+      stem(cv, 26, -R * 1.5, -30, -R * 1.25, -10, 6);
+      leaf(cv, 52, -R * 1.38, 24, -25, d.accent);
       break;
     case 'Strawberry':
       for (let i = -2; i <= 2; i++) leaf(cv, i * 20, -R * 0.9 + Math.abs(i) * 6, 26, i * 28 + (i === 0 ? 90 : 0), d.accent);

@@ -69,7 +69,7 @@ function col(s: string) {
 
 function setFill(p: SkPaint, color: string, alpha = 1) {
   p.setColor(col(color));
-  p.setAlphaf(alpha);
+  p.setAlphaf(p.getAlphaf() * alpha); // keep any alpha baked into an rgba() color
 }
 
 // ---------------------------------------------------------------- background

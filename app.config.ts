@@ -53,7 +53,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       'expo-build-properties',
       {
         android: {
-          // Google Play target API requirement (Aug 2025+: API 35). Verify yearly — see RELEASE.md.
+          // Google Play: new apps + updates must target API 36 since 31 Aug 2026. Re-check yearly — see RELEASE.md.
           targetSdkVersion: 36,
           compileSdkVersion: 36,
           enableMinifyInRelease: true,
