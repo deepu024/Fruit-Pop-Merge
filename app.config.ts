@@ -60,6 +60,14 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
           targetSdkVersion: 36,
           enableMinifyInRelease: true,
           enableShrinkResourcesInRelease: true,
+          // R8 strips Room's generated *_Impl classes (WorkManager is pulled in by the Ads SDK),
+          // which crashes release builds at startup. Keep them.
+          extraProguardRules: [
+            '-keep class * extends androidx.room.RoomDatabase { <init>(); }',
+            '-keep class androidx.work.impl.** { *; }',
+            '-keep class androidx.work.** { *; }',
+            '-dontwarn androidx.work.**',
+          ].join('\n'),
         },
       },
     ],

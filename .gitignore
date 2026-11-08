@@ -42,3 +42,6 @@ yarn-error.*
 
 # test/preview output
 coverage/
+
+# built APK/AAB copies
+/release

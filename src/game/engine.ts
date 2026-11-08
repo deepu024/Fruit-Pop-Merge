@@ -28,6 +28,8 @@ const WARN_MS = 350;
 const GRACE_AFTER_DROP_MS = 1200;
 const MAX_POWERUPS_EARNED = 3;
 const MAX_FRUITS = 90;
+/** same-level fruits closer than this (world units) count as touching */
+const TOUCH_GAP = 1.5;
 
 export type PowerUp = 'shake' | 'bomb';
 
@@ -422,7 +424,7 @@ export class GameEngine {
     this.slowMoMs = Math.max(this.slowMoMs, ms);
   }
 
-  /** Marks same-level pairs that are almost touching. O(n²/2) but only every 3rd step. */
+  /** Marks same-level pairs that are almost touching (and merges hairline gaps). O(n²/2), every 3rd step. */
   private updateNear() {
     const fr = this.fruits;
     for (const f of fr) f.nearTarget = 0;
@@ -434,6 +436,13 @@ export class GameEngine {
         const dx = a.body.position.x - b.body.position.x;
         const dy = a.body.position.y - b.body.position.y;
         const gap = Math.sqrt(dx * dx + dy * dy) - 2 * a.r;
+        // Resting side by side with a hairline gap, matter never reports a contact,
+        // so to the player they look touching but never merge. Treat that as a touch.
+        if (gap < TOUCH_GAP && !a.merging && !b.merging) {
+          a.merging = b.merging = true;
+          this.mergeQueue.push([a, b]);
+          continue;
+        }
         const range = Math.max(14, a.r * 0.7);
         if (gap < range) {
           const t = 1 - Math.max(0, gap) / range;

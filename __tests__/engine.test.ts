@@ -148,4 +148,16 @@ describe('GameEngine', () => {
     expect(e.fruits.some((f) => f.happyT > 0)).toBe(true);
     expect(e.slowMoMs + e.flash).toBeGreaterThan(0);
   });
+
+  it('merges same-level fruits resting with a hairline gap', () => {
+    const e = new GameEngine({ seed: 1 });
+    const r = FRUITS[0].radius;
+    const a = e.debugSpawn(0, 200, 735);
+    const b = e.debugSpawn(0, 200 + 2 * r + 1, 735); // 1 unit apart, never colliding
+    Matter.Body.setStatic(a.body, true);
+    Matter.Body.setStatic(b.body, true);
+    run(e, 200);
+    expect(e.fruits.some((f) => f.level === 1)).toBe(true);
+    expect(e.score).toBe(FRUITS[1].score);
+  });
 });
