@@ -1,7 +1,7 @@
 import { Canvas, Picture, Skia, type SkPicture } from '@shopify/react-native-skia';
 import { memo, useEffect } from 'react';
 import { StyleSheet } from 'react-native';
-import { GestureDetector, usePanGesture } from 'react-native-gesture-handler';
+import { GestureDetector, useCompetingGestures, usePanGesture, useTapGesture } from 'react-native-gesture-handler';
 import { useSharedValue } from 'react-native-reanimated';
 
 import type { GameEngine } from '../game/engine';
@@ -55,6 +55,19 @@ export const GameCanvas = memo(function GameCanvas({ engine, layout, onDropFaile
     return () => cancelAnimationFrame(raf);
   }, [engine, layout, picture]);
 
+  // Finger lifted: drop the held fruit there, or pop the fruit under it if a bomb is armed.
+  const release = (x: number, y: number) => {
+    const w = screenToWorld(layout, x, y);
+    if (engine.bombArmed) {
+      engine.bombAt(w.x, w.y);
+      return;
+    }
+    engine.aim(w.x);
+    if (!engine.drop()) onDropFailed?.();
+  };
+
+  // Drag-to-aim. A stationary tap never activates a pan (it ends "canceled"),
+  // so taps are handled by the competing tap gesture below.
   const pan = usePanGesture({
     runOnJS: true,
     minDistance: 0,
@@ -66,19 +79,20 @@ export const GameCanvas = memo(function GameCanvas({ engine, layout, onDropFaile
       if (!engine.bombArmed) engine.aim(screenToWorld(layout, e.x, e.y).x);
     },
     onFinalize: (e) => {
-      if (e.canceled) return;
-      const w = screenToWorld(layout, e.x, e.y);
-      if (engine.bombArmed) {
-        engine.bombAt(w.x, w.y);
-        return;
-      }
-      engine.aim(w.x);
-      if (!engine.drop()) onDropFailed?.();
+      if (!e.canceled) release(e.x, e.y);
     },
   });
 
+  const tap = useTapGesture({
+    runOnJS: true,
+    maxDuration: 5000, // press-and-hold then release still counts
+    onActivate: (e) => release(e.x, e.y),
+  });
+
+  const gesture = useCompetingGestures(pan, tap);
+
   return (
-    <GestureDetector gesture={pan}>
+    <GestureDetector gesture={gesture}>
       <Canvas style={StyleSheet.absoluteFill}>
         <Picture picture={picture} />
       </Canvas>

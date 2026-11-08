@@ -120,7 +120,7 @@ Consent: Google UMP (`AdsConsent.gatherConsent`) runs before the SDK initializes
 
 ## Profiling
 
-In dev builds `src/render/perf.ts` logs every 5 s to Metro:
+In dev builds `src/render/perf.ts` logs every 5 s to Metro (or logcat `ReactNativeJS` in a release build made with `EXPO_PUBLIC_PERF=1`):
 `[perf] { fps, p95FrameMs, jank, avgJsWorkMs, p95JsWorkMs }`. `avgJsWorkMs` is physics + scene
 recording per frame; it must stay well under ~10 ms on your target phone for 60 fps.
 For deeper checks: Android Studio → Profiler (CPU/memory), or `adb shell dumpsys gfxinfo

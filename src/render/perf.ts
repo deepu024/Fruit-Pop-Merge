@@ -9,7 +9,7 @@ let n = 0;
 let lastLog = 0;
 
 export const perf = {
-  enabled: __DEV__,
+  enabled: __DEV__ || process.env.EXPO_PUBLIC_PERF === '1', // EXPO_PUBLIC_PERF=1 profiles release builds
   frame(dt: number, workMs: number) {
     if (!perf.enabled) return;
     intervals[n % WINDOW] = dt;
