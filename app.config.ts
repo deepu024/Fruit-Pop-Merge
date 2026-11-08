@@ -63,6 +63,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
         },
       },
     ],
+    './plugins/withGradleThrottle', // keeps local builds from freezing the Mac
   ],
   extra: {
     eas: {
