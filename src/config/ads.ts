@@ -21,6 +21,14 @@ const PRODUCTION = {
 
 export const AD_UNITS = USE_TEST_ADS ? TEST : PRODUCTION;
 
+/**
+ * Your own phones: real ad units show labelled test ads on these devices, so you can check
+ * real IDs safely. Find the ID in logcat after one ad request:
+ *   adb logcat | grep -i "test device"
+ * ("Use RequestConfiguration.Builder().setTestDeviceIds(Arrays.asList("ABC123..."))").
+ */
+export const TEST_DEVICE_IDS: string[] = [];
+
 /** Interstitial pacing: every Nth game over, never before game number MIN_GAMES + 1. */
 export const INTERSTITIAL_EVERY = 3;
 export const INTERSTITIAL_MIN_GAMES = 2;

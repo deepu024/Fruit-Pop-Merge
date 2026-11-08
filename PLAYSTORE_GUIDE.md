@@ -13,7 +13,7 @@ nobody else can do them for you. Companion docs: `RELEASE.md` (privacy, data saf
 2. Pay the one-time **US$25** fee, verify identity (ID document) and phone. Approval can take days.
 3. Use a dedicated email you will keep forever (e.g. `yourstudio.games@gmail.com`).
 
-### A2. AdMob 🔑
+### A2. AdMob 🔑 (full walkthrough: `ADMOB_SETUP.md`)
 1. https://apps.admob.com → Apps → Add app → Android → "not published yet".
 2. Copy the **App ID** → `src/config/app.json` → `admobAndroidAppId`.
 3. Create 3 ad units: Banner, Interstitial, Rewarded → paste into `src/config/ads.ts` `PRODUCTION`,

@@ -1,6 +1,6 @@
 import mobileAds, { AdEventType, AdsConsent, InterstitialAd, MaxAdContentRating, RewardedAd, RewardedAdEventType } from 'react-native-google-mobile-ads';
 
-import { AD_UNITS, INTERSTITIAL_EVERY, INTERSTITIAL_MIN_GAMES } from '../config/ads';
+import { AD_UNITS, INTERSTITIAL_EVERY, INTERSTITIAL_MIN_GAMES, TEST_DEVICE_IDS } from '../config/ads';
 import { shouldShowInterstitial } from '../game/scoring';
 import { storage } from '../storage/storage';
 
@@ -57,6 +57,7 @@ export const ads = {
         tagForChildDirectedTreatment: false,
         tagForUnderAgeOfConsent: false,
         maxAdContentRating: MaxAdContentRating.PG,
+        testDeviceIdentifiers: ['EMULATOR', ...TEST_DEVICE_IDS],
       });
       await mobileAds().initialize();
       ready = true;
