@@ -91,6 +91,20 @@ This project sets `targetSdkVersion: 36` / `compileSdkVersion: 36` via `expo-bui
    it has changed before. Organization accounts are usually exempt.
 3. Upload the `.aab` to *Internal testing* first (instant, up to 100 testers), then *Closed testing*.
 
+### In-app products (Monetize > Products > In-app products)
+
+Create these 3 **managed products** (one-time, not subscriptions) with exactly these ids, then activate them:
+
+| Product id | Suggested price | Grants |
+|---|---|---|
+| `remove_ads` | $2.99 | Removes ads permanently (non-consumable, restorable) |
+| `starter_pack` | $4.99 | Removes ads + 10 Shake + 10 Bomb power-ups (non-consumable; restore re-applies ad removal only) |
+| `powerup_pack` | $0.99 | 5 Shake + 5 Bomb power-ups (consumable, can be bought repeatedly) |
+
+Products only load from a build installed from Play (internal testing track is fine). Add your Google
+account under *Settings > License testing* to buy for free, and test on a real device with that account.
+Purchases must be acknowledged within 3 days or Google refunds them; the app does this automatically.
+
 ## 3. Privacy policy
 
 Free hosting options: GitHub Pages (a `privacy.md` in a public repo), Google Sites, Notion public page,

@@ -285,6 +285,15 @@ export class GameEngine {
     this.emitPowerUps(p);
   }
 
+  /**
+   * Adjusts a run's power-up count without counting as an earned reward (no toast).
+   * Used to move purchased inventory in and out of the run. Never goes below 0.
+   */
+  adjustPowerUp(p: PowerUp, delta: number) {
+    this.powerUps[p] = Math.max(0, this.powerUps[p] + delta);
+    this.emitPowerUps();
+  }
+
   private emitPowerUps(earned?: PowerUp) {
     this.emit({ type: 'powerups', shake: this.powerUps.shake, bomb: this.powerUps.bomb, earned });
   }

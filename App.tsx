@@ -6,6 +6,7 @@ import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { ads } from './src/ads/ads';
+import { iapStore } from './src/iap/store';
 import { sound } from './src/audio/sound';
 import { Backdrop } from './src/ui/components/Backdrop';
 import type { Screen } from './src/ui/nav';
@@ -20,6 +21,7 @@ export default function App() {
   useEffect(() => {
     sound.init().then(() => sound.setMusicPlaying(true));
     ads.init(); // UMP consent first, then SDK init + preload
+    iapStore.init(); // Play Billing: connect, load prices, re-apply owned purchases
   }, []);
 
   // Simple state-based screen switch; each screen fades in/out (Reanimated layout animations).

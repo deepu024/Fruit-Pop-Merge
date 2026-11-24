@@ -12,7 +12,7 @@ import { GameEngine, type GameEvent } from '../../game/engine';
 import { dailySeed, dateKey, randomSeed } from '../../game/rng';
 import { computeLayout } from '../../render/drawFrame';
 import { GameCanvas } from '../../render/GameCanvas';
-import { storage } from '../../storage/storage';
+import { storage, type PowerUpKind } from '../../storage/storage';
 import { Button } from '../components/Button';
 import { DiscoveryCard } from '../components/DiscoveryCard';
 import { FruitIcon } from '../components/FruitIcon';
@@ -36,6 +36,8 @@ export function GameScreen({ mode, navigate }: { mode: GameMode; navigate: Navig
   const [over, setOver] = useState<Over | null>(null);
   const [power, setPower] = useState({ ...engine.powerUps });
   const [bomb, setBomb] = useState(false);
+  const [inv, setInv] = useState(storage.getInventory());
+  const bombFromInv = useRef(false); // armed bomb was taken from purchased inventory
   const [adsUsed, setAdsUsed] = useState(0);
   const [rewardReady, setRewardReady] = useState(ads.rewardedReady());
   const [toast, setToast] = useState<string | null>(null);
@@ -49,6 +51,8 @@ export function GameScreen({ mode, navigate }: { mode: GameMode; navigate: Navig
     setOver(null);
     setPaused(false);
     setBomb(false);
+    bombFromInv.current = false;
+    setInv(storage.getInventory());
     setAdsUsed(0);
     setPower({ ...engine.powerUps });
     const discovered = storage.getDiscovered();
@@ -90,8 +94,16 @@ export function GameScreen({ mode, navigate }: { mode: GameMode; navigate: Navig
           break;
         case 'bomb':
           setBomb(e.armed);
+          if (!e.armed) bombFromInv.current = false; // popped a fruit: the inventory bomb is spent
           break;
         case 'gameover': {
+          if (bombFromInv.current) {
+            // engine disarms silently on game over: give back the bomb taken from inventory
+            bombFromInv.current = false;
+            engine.adjustPowerUp('bomb', -1);
+            storage.addInventory('bomb', 1);
+            setInv(storage.getInventory());
+          }
           sound.play('gameover');
           haptics.gameOver();
           const newBest = mode === 'daily' ? storage.submitDailyBest(today, e.score) : storage.submitBest(e.score);
@@ -182,6 +194,43 @@ export function GameScreen({ mode, navigate }: { mode: GameMode; navigate: Navig
     }
   };
 
+  /** Moves one purchased power-up into the run. False if the inventory has none. */
+  const takeFromInventory = (p: PowerUpKind): boolean => {
+    if (!storage.takeInventory(p)) return false;
+    engine.adjustPowerUp(p, 1);
+    setInv(storage.getInventory());
+    return true;
+  };
+
+  /** Returns an armed-but-unused inventory bomb to the inventory (cancel or game over). */
+  const refundInventoryBomb = () => {
+    if (!bombFromInv.current) return;
+    bombFromInv.current = false;
+    engine.adjustPowerUp('bomb', -1);
+    storage.addInventory('bomb', 1);
+    setInv(storage.getInventory());
+  };
+
+  /** Run's own shake first; otherwise spend a purchased one. Only consumed if the shake can actually happen. */
+  const doShake = () => {
+    if (engine.paused || engine.gameOver) return;
+    if (engine.powerUps.shake > 0 || takeFromInventory('shake')) engine.useShake();
+  };
+
+  /** Arming uses the run's bomb or takes a purchased one; cancelling an inventory bomb returns it. */
+  const doBomb = () => {
+    if (engine.paused || engine.gameOver) return;
+    if (engine.bombArmed) {
+      engine.toggleBomb();
+      refundInventoryBomb();
+    } else if (engine.powerUps.bomb > 0) {
+      engine.toggleBomb();
+    } else if (takeFromInventory('bomb')) {
+      bombFromInv.current = true;
+      engine.toggleBomb();
+    }
+  };
+
   const canAdPower = !over && adsUsed < REWARDED_POWERUPS_PER_RUN && rewardReady;
 
   return (
@@ -202,8 +251,8 @@ export function GameScreen({ mode, navigate }: { mode: GameMode; navigate: Navig
 
       {/* power-ups */}
       <View style={[styles.bar, { bottom: insets.bottom + 10 }]} pointerEvents="box-none">
-        <Button small label={`Shake ${power.shake}`} color="#3DBFA8" disabled={power.shake <= 0 || !!over} onPress={() => engine.useShake()} />
-        <Button small label={bomb ? 'Cancel' : `Bomb ${power.bomb}`} color={bomb ? '#FF4D6D' : '#FF9F1C'} disabled={(!bomb && power.bomb <= 0) || !!over} onPress={() => engine.toggleBomb()} />
+        <Button small label={`Shake ${power.shake + inv.shake}`} color="#3DBFA8" disabled={power.shake + inv.shake <= 0 || !!over} onPress={doShake} />
+        <Button small label={bomb ? 'Cancel' : `Bomb ${power.bomb + inv.bomb}`} color={bomb ? '#FF4D6D' : '#FF9F1C'} disabled={(!bomb && power.bomb + inv.bomb <= 0) || !!over} onPress={doBomb} />
         {canAdPower && <Button small label="+1" badge="AD" color={theme.accent2} onPress={watchForPowerUp} />}
       </View>
 

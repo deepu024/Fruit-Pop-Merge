@@ -10,6 +10,7 @@
     "expo-build-properties": "~58.0.12",
     "expo-dev-client": "~58.0.18",
     "expo-haptics": "~58.0.7",
+    "expo-iap": "^6.5.1",
     "expo-splash-screen": "~58.0.13",
     "expo-status-bar": "~58.0.4",
     "expo-system-ui": "~58.0.7",
@@ -28,6 +29,8 @@
     "@types/jest": "^30.0.0",
     "@types/matter-js": "^0.20.2",
     "@types/react": "~19.3.0",
+    "eslint": "^9.0.0",
+    "eslint-config-expo": "~58.0.4",
     "jest": "^30.5.2",
     "jest-expo": "^58.0.14",
     "typescript": "~6.0.3"

@@ -71,6 +71,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
         },
       },
     ],
+    'expo-iap', // Play Billing; its manifest already declares com.android.vending.BILLING
     './plugins/withGradleThrottle', // keeps local builds from freezing the Mac
     './plugins/withReleaseSigning', // local upload-key signing; secrets stay in ~/.gradle/gradle.properties
   ],

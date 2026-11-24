@@ -16,7 +16,13 @@ const K = {
   adsRemoved: 'iap.adsRemoved',
   tutorialDone: 'tutorialDone',
   daily: (date: string) => `daily.best.${date}`,
+  invShake: 'inv.shake',
+  invBomb: 'inv.bomb',
+  granted: (token: string) => `iap.granted.${token}`,
 };
+
+export type PowerUpKind = 'shake' | 'bomb';
+export type Inventory = Record<PowerUpKind, number>;
 
 const num = (k: string, d = 0) => kv.getNumber(k) ?? d;
 const bool = (k: string, d: boolean) => kv.getBoolean(k) ?? d;
@@ -74,4 +80,22 @@ export const storage = {
 
   getAdsRemoved: () => bool(K.adsRemoved, false),
   setAdsRemoved: (v: boolean) => kv.set(K.adsRemoved, v),
+
+  /** Purchased power-ups, kept across runs. Used only after a run's free ones run out. */
+  getInventory: (): Inventory => ({ shake: num(K.invShake), bomb: num(K.invBomb) }),
+  addInventory(p: PowerUpKind, n: number) {
+    if (n > 0) kv.set(p === 'shake' ? K.invShake : K.invBomb, num(p === 'shake' ? K.invShake : K.invBomb) + n);
+  },
+  /** Takes one from the inventory; false if there was none. */
+  takeInventory(p: PowerUpKind): boolean {
+    const k = p === 'shake' ? K.invShake : K.invBomb;
+    const have = num(k);
+    if (have <= 0) return false;
+    kv.set(k, have - 1);
+    return true;
+  },
+
+  /** Purchase tokens already granted, so a replayed store event never grants twice. */
+  hasGrantedToken: (token: string) => bool(K.granted(token), false),
+  markGrantedToken: (token: string) => kv.set(K.granted(token), true),
 };
