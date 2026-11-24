@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AppState, BackHandler, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
-import Animated, { FadeIn, FadeOut, SlideInDown, SlideOutDown, useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming } from 'react-native-reanimated';
+import Animated, { Easing, FadeIn, FadeInDown, FadeOut, useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ads } from '../../ads/ads';
@@ -21,6 +21,8 @@ import type { GameMode, Navigate } from '../nav';
 import { useCountUp } from '../useCountUp';
 
 const HUD_H = 64;
+/** Overlay panels ease in once, no spring overshoot (a springy slide wobbled for seconds). */
+const panelIn = (delay = 0) => FadeInDown.duration(240).delay(delay).easing(Easing.out(Easing.cubic));
 const BAR_H = 84;
 
 type Over = { score: number; best: number; newBest: boolean };
@@ -271,7 +273,7 @@ export function GameScreen({ mode, navigate }: { mode: GameMode; navigate: Navig
 
       {paused && !over && (
         <Animated.View entering={FadeIn.duration(180)} exiting={FadeOut.duration(150)} style={styles.overlay}>
-          <Animated.View entering={SlideInDown.springify().damping(14)} style={styles.panel}>
+          <Animated.View entering={panelIn()} style={styles.panel}>
             <Text style={styles.panelTitle}>Paused</Text>
             <Button label="Resume" onPress={() => pause(false)} />
             <Button label="Restart" color={theme.accent2} onPress={restart} />
@@ -339,7 +341,7 @@ function GameOverPanel(props: { over: Over; mode: GameMode; canContinue: boolean
   const { over } = props;
   const shown = useCountUp(over.score);
   return (
-    <Animated.View entering={SlideInDown.springify().damping(13).delay(150)} exiting={SlideOutDown} style={styles.panel}>
+    <Animated.View entering={panelIn(150)} exiting={FadeOut.duration(150)} style={styles.panel}>
       <Text style={styles.panelTitle}>{props.mode === 'daily' ? 'Daily Over' : 'Game Over'}</Text>
       <Text style={styles.bigScore}>{shown.toLocaleString()}</Text>
       {over.newBest ? (
