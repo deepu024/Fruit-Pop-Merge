@@ -4,6 +4,7 @@ import Animated, { Easing, FadeIn, FadeInDown, FadeOut, useAnimatedStyle, useSha
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ads } from '../../ads/ads';
+import { GAME_BANNER_SPACE, GameBanner, gameBannerEligible } from '../../ads/GameBanner';
 import { haptics } from '../../audio/haptics';
 import { sound } from '../../audio/sound';
 import { REWARDED_POWERUPS_PER_RUN } from '../../config/ads';
@@ -31,8 +32,10 @@ export function GameScreen({ mode, navigate }: { mode: GameMode; navigate: Navig
   const insets = useSafeAreaInsets();
   const { width, height } = useWindowDimensions();
   const [run, setRun] = useState(0);
+  // banner space is fixed per run so the jar never resizes mid-game
+  const [bannerSpace, setBannerSpace] = useState(() => (gameBannerEligible() ? GAME_BANNER_SPACE : 0));
   const engine = useMemo(() => new GameEngine({ seed: mode === 'daily' ? dailySeed() : randomSeed() }), [mode, run]);
-  const layout = useMemo(() => computeLayout(width, height, insets.top + HUD_H, insets.bottom + BAR_H), [width, height, insets.top, insets.bottom]);
+  const layout = useMemo(() => computeLayout(width, height, insets.top + HUD_H, insets.bottom + BAR_H + bannerSpace), [width, height, insets.top, insets.bottom, bannerSpace]);
 
   const [paused, setPaused] = useState(false);
   const [over, setOver] = useState<Over | null>(null);
@@ -176,7 +179,11 @@ export function GameScreen({ mode, navigate }: { mode: GameMode; navigate: Navig
     [engine, mode, today],
   );
 
-  const restart = () => endRun(() => setRun((r) => r + 1));
+  const restart = () =>
+    endRun(() => {
+      setBannerSpace(gameBannerEligible() ? GAME_BANNER_SPACE : 0);
+      setRun((r) => r + 1);
+    });
   const home = () => endRun(() => navigate({ name: 'menu' }));
 
   const watchForContinue = async () => {
@@ -252,7 +259,7 @@ export function GameScreen({ mode, navigate }: { mode: GameMode; navigate: Navig
       </View>
 
       {/* power-ups */}
-      <View style={[styles.bar, { bottom: insets.bottom + 10 }]} pointerEvents="box-none">
+      <View style={[styles.bar, { bottom: insets.bottom + 10 + bannerSpace }]} pointerEvents="box-none">
         <Button small label={`Shake ${power.shake + inv.shake}`} color="#3DBFA8" disabled={power.shake + inv.shake <= 0 || !!over} onPress={doShake} />
         <Button small label={bomb ? 'Cancel' : `Bomb ${power.bomb + inv.bomb}`} color={bomb ? '#FF4D6D' : '#FF9F1C'} disabled={(!bomb && power.bomb + inv.bomb <= 0) || !!over} onPress={doBomb} />
         {canAdPower && <Button small label="+1" badge="AD" color={theme.accent2} onPress={watchForPowerUp} />}
@@ -287,6 +294,8 @@ export function GameScreen({ mode, navigate }: { mode: GameMode; navigate: Navig
           <GameOverPanel over={over} mode={mode} canContinue={!engine.continued && rewardReady} onContinue={watchForContinue} onRestart={restart} onHome={home} />
         </Animated.View>
       )}
+
+      {bannerSpace > 0 && <GameBanner bottom={insets.bottom} />}
     </View>
   );
 }
